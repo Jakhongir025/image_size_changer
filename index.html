@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PhotoSize Optimizer</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --secondary: #10b981;
+            --danger: #ef4444;
+            --bg: #f8fafc;
+            --card: #ffffff;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg);
+            color: #1e293b;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background: var(--card);
+            width: 95%;
+            max-width: 500px;
+            padding: 2rem;
+            border-radius: 24px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            text-align: center;
+        }
+
+        h1 { font-size: 1.8rem; margin-bottom: 0.5rem; color: #0f172a; }
+        p { color: #64748b; margin-bottom: 1.5rem; }
+
+        /* Hajmni tanlash qismi */
+        .size-selector {
+            background: #f1f5f9;
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+        }
+
+        .size-selector label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #475569;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            cursor: pointer;
+        }
+
+        .range-value {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        /* Yuklash oynasi */
+        .upload-area {
+            border: 2px dashed #cbd5e1;
+            padding: 2.5rem 1rem;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #fdfdfd;
+            display: block;
+            margin-bottom: 1rem;
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary);
+            background: #f5f7ff;
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        input[type="file"] { display: none; }
+
+        /* Natija qismi */
+        #resultSection { display: none; }
+
+        .preview-card {
+            background: #f8fafc;
+            padding: 10px;
+            border-radius: 12px;
+            margin: 1.5rem 0;
+        }
+
+        #preview {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 8px;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-box {
+            padding: 0.8rem;
+            border-radius: 10px;
+            font-size: 0.9rem;
+        }
+
+        .stat-old { background: #fee2e2; color: #991b1b; }
+        .stat-new { background: #dcfce7; color: #166534; }
+
+        /* Tugmalar */
+        .btn-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            color: white;
+            text-decoration: none;
+        }
+
+        .btn-primary { background: var(--primary); }
+        .btn-success { background: var(--secondary); }
+        .btn-warning { background: #f59e0b; }
+        .btn-danger { background: var(--danger); }
+        .btn-full { grid-column: span 2; background: #64748b; }
+
+        .btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 100;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9);
+            justify-content: center; align-items: center;
+        }
+        .modal img { max-width: 90%; max-height: 90%; }
+        .close { position: absolute; top: 20px; right: 30px; color: white; font-size: 40px; cursor: pointer; }
+
+        .loader {
+            display: none;
+            width: 40px; height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="mainSection">
+        <h1>Rasm Optimizer</h1>
+        <p>Hajmni belgilang va sifatni saqlang</p>
+
+        <div class="size-selector">
+            <label>Kerakli maksimal hajm:</label>
+            <input type="range" id="sizeRange" min="50" max="2000" step="50" value="200">
+            <div class="range-value"><span id="rangeDisplay">200</span> KB</div>
+        </div>
+
+        <label class="upload-area" id="dropZone">
+            <span class="upload-icon">🖼️</span>
+            <strong>Rasm tanlash</strong>
+            <p style="font-size: 0.8rem;">yoki rasmni shu yerga sudrang</p>
+            <input type="file" id="fileInput" accept="image/*">
+        </label>
+    </div>
+
+    <div class="loader" id="loader"></div>
+
+    <div id="resultSection">
+        <h3>Natija tayyor!</h3>
+        <div class="stats">
+            <div class="stat-box stat-old">Avval: <br><strong id="oldSize">0</strong> KB</div>
+            <div class="stat-box stat-new">Hozir: <br><strong id="newSize">0</strong> KB</div>
+        </div>
+
+        <div class="preview-card">
+            <img id="preview" src="">
+        </div>
+
+        <div class="btn-grid">
+            <button class="btn btn-primary" onclick="openModal()">👁️ Ko'rish</button>
+            <a id="downloadBtn" class="btn btn-success">💾 Yuklab olish</a>
+            <button class="btn btn-warning" onclick="triggerInput()">🔄 Almashtirish</button>
+            <button class="btn btn-danger" onclick="resetPage()">🗑️ O'chirish</button>
+            <button class="btn btn-full" onclick="resetPage()">⬅️ Orqaga qaytish</button>
+        </div>
+    </div>
+</div>
+
+<div id="imageModal" class="modal">
+    <span class="close" onclick="closeModal()">&times;</span>
+    <img id="fullImage" src="">
+</div>
+
+<script>
+    const sizeRange = document.getElementById('sizeRange');
+    const rangeDisplay = document.getElementById('rangeDisplay');
+    const fileInput = document.getElementById('fileInput');
+    const mainSection = document.getElementById('mainSection');
+    const resultSection = document.getElementById('resultSection');
+    const loader = document.getElementById('loader');
+    const preview = document.getElementById('preview');
+    const downloadBtn = document.getElementById('downloadBtn');
+
+    let currentBlobUrl = null;
+
+    // Range slider qiymatini yangilash
+    sizeRange.addEventListener('input', () => {
+        rangeDisplay.innerText = sizeRange.value;
+    });
+
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files[0]) handleFile(e.target.files[0]);
+    });
+
+    function handleFile(file) {
+        mainSection.style.display = 'none';
+        loader.style.display = 'block';
+        resultSection.style.display = 'none';
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.src = e.target.result;
+            img.onload = () => {
+                document.getElementById('oldSize').innerText = (file.size / 1024).toFixed(1);
+                compress(img);
+            };
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function compress(img) {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        let width = img.width;
+        let height = img.height;
+
+        // Juda katta rasmlarni biroz kichraytirish (sifat yo'qolmasligi uchun)
+        const limit = 1920;
+        if (width > limit) {
+            height *= limit / width;
+            width = limit;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        ctx.drawImage(img, 0, 0, width, height);
+
+        let quality = 0.95;
+        const targetKb = parseInt(sizeRange.value) * 1024;
+
+        function attempt() {
+            canvas.toBlob((blob) => {
+                if (blob.size > targetKb && quality > 0.1) {
+                    quality -= 0.05;
+                    attempt();
+                } else {
+                    showResult(blob);
+                }
+            }, 'image/jpeg', quality);
+        }
+        attempt();
+    }
+
+    function showResult(blob) {
+        if (currentBlobUrl) URL.revokeObjectURL(currentBlobUrl);
+        currentBlobUrl = URL.createObjectURL(blob);
+        
+        preview.src = currentBlobUrl;
+        document.getElementById('fullImage').src = currentBlobUrl;
+        downloadBtn.href = currentBlobUrl;
+        downloadBtn.download = `compressed_${sizeRange.value}kb.jpg`;
+        document.getElementById('newSize').innerText = (blob.size / 1024).toFixed(1);
+
+        loader.style.display = 'none';
+        resultSection.style.display = 'block';
+    }
+
+    function resetPage() {
+        mainSection.style.display = 'block';
+        resultSection.style.display = 'none';
+        fileInput.value = '';
+    }
+
+    function triggerInput() { fileInput.click(); }
+    function openModal() { document.getElementById('imageModal').style.display = 'flex'; }
+    function closeModal() { document.getElementById('imageModal').style.display = 'none'; }
+
+    // Drag and Drop
+    const dropZone = document.getElementById('dropZone');
+    dropZone.ondragover = (e) => { e.preventDefault(); dropZone.style.borderColor = '#6366f1'; };
+    dropZone.ondragleave = () => { dropZone.style.borderColor = '#cbd5e1'; };
+    dropZone.ondrop = (e) => {
+        e.preventDefault();
+        const file = e.dataTransfer.files[0];
+        if (file && file.type.startsWith('image/')) handleFile(file);
+    };
+</script>
+
+</body>
+</html>
